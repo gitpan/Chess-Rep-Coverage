@@ -1,7 +1,5 @@
-# $Id: Coverage.pm 913 2008-08-06 02:47:37Z gene $
-
 package Chess::Rep::Coverage;
-our $VERSION = '0.0401';
+our $VERSION = '0.0402';
 use strict;
 use warnings;
 use base 'Chess::Rep';
@@ -33,6 +31,7 @@ sub coverage {
             my $f = Chess::Rep::get_field_id($i);
             my $c = $self->piece_color($i);
             my $p = $self->get_piece_at($row, $col) || '';
+#warn"$i, $f, $c, $p\n";
 
             $cover->{$f}{index} = $i;
 
@@ -42,6 +41,10 @@ sub coverage {
                 $cover->{$f}{occupant} = $name{$p} .' '. $p;
                 $moves = [ map { $_->{to} } grep { $_->{from} == $i } @$status ];
                 $cover->{$f}{move} = $moves if @$moves;
+                for my $m (@{$cover->{$f}{move}}) {
+                    my $x = $self->get_piece_at_index($m);
+                    push @{$cover->{$f}{threatens}}, $m if $x;
+                }
             }
 
             for my $color (0, 0x80) {
@@ -86,7 +89,7 @@ protected with a simple true value.
 
 =head2 new()
 
-Return a new C<Chess::Coverage> object.
+Return a new C<Chess::Coverage> object as a subclass of L<Chess::Rep>.
 
 =head2 coverage()
 

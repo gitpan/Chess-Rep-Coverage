@@ -1,8 +1,12 @@
 Changes file for Chess::Coverage
 
+0.0402 2009.01.23
+    - Fixed the coverage() moves code.
+    - Enhanced existing test but normalized them and added pod coverage.
+    - Removed the useless eg/ directory.
+
 0.0401 2008.08.04
-    - This is a subclass of Chess::Rep, not its own thing
-      (Chess::Coverage).
+    - This is a subclass Chess::Rep.e. Chess::Coverage).
 
 0.04 2008.08.03
     - Cleaned syntax and optimized looping a bit.
