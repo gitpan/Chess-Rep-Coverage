@@ -1,5 +1,8 @@
 Changes file for Chess::Coverage
 
+0.0403 2009.01.23
+    - Fixed the t/boilerplate code.
+
 0.0402 2009.01.23
     - Fixed the coverage() moves code.
     - Enhanced existing test but normalized them and added pod coverage.

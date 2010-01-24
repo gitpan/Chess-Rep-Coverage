@@ -1,0 +1,35 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Chess::Rep;
+
+my $pos = Chess::Rep->new;
+#print $pos->get_fen;
+
+#$pos->go_move('e4');
+#$pos->go_move('e7e5');
+#$pos->go_move('Bc4');
+#$pos->go_move('Nc8-C6');
+#$pos->go_move('Qf3');
+#$pos->go_move('d6');
+#$pos->go_move('F3-F7');
+
+#print "CHECK\n"     if $pos->status->{check};
+#print "MATE\n"      if $pos->status->{mate};
+#print "STALEMATE\n" if $pos->status->{stalemate};
+
+# Reset position from FEN
+#$pos->set_from_fen('r1b1k1nr/pp1ppppp/8/2pP4/3b4/8/PPP1PqPP/RNBQKBNR w KQkq - 0 1');
+my $status = $pos->status;
+
+my $moves = $status->{moves}; # there's only one move, E1-D2
+print Chess::Rep::get_field_id($moves->[0]{from})
+    . ' => ' .
+      Chess::Rep::get_field_id($moves->[0]{to});
+
+use Data::Dumper;local$Data::Dumper::Indent=1;local$Data::Dumper::Terse=1;local$Data::Dumper::Sortkeys=1;
+warn Dumper([keys%$status]);
+__END__
+print $status->{check};   # 1
+print $status->{mate};
+print $status->{stalemate};

@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Chess-Rep-Coverage
-version:            0.0402
+version:            0.0403
 abstract:           Expose chess ply potential energy
 author:
     - Gene Boggs <gene@cpan.org>

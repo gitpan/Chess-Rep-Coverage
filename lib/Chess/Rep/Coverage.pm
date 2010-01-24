@@ -1,5 +1,5 @@
 package Chess::Rep::Coverage;
-our $VERSION = '0.0402';
+our $VERSION = '0.0403';
 use strict;
 use warnings;
 use base 'Chess::Rep';
