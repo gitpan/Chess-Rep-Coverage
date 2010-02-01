@@ -1,60 +1,91 @@
 package Chess::Rep::Coverage;
-our $VERSION = '0.0403';
+our $VERSION = '0.05_01';
 use strict;
 use warnings;
 use base 'Chess::Rep';
 
-sub coverage {
+my $piece_to_id = Chess::Rep::PIECE_TO_ID;
+$piece_to_id = { reverse %$piece_to_id };
+
+sub covers {
     my $self = shift;
-    my %name = (
-        0x01 => 'black pawn',
-        0x02 => 'black knight',
-        0x04 => 'black king',
-        0x08 => 'black bishop',
-        0x10 => 'black rook',
-        0x20 => 'black queen',
-        0x81 => 'white pawn',
-        0x82 => 'white knight',
-        0x84 => 'white king',
-        0x88 => 'white bishop',
-        0x90 => 'white rook',
-        0xA0 => 'white queen',
+    my %args = (
+        -as_field   => 0,
+        -protection => 0,
+        @_
     );
 
     my $cover = {};
+    my $action = $args{-protection} ? 'protects' : 'attacks';
 
-    my $status = $self->status->{moves};
+    for my $piece (@{$self->status->{pieces}}) {
 
-    for my $row (0 .. 7) {
-        for my $col (0 .. 7) {
-            my $i = Chess::Rep::get_index($row, $col);
-            my $f = Chess::Rep::get_field_id($i);
-            my $c = $self->piece_color($i);
-            my $p = $self->get_piece_at($row, $col) || '';
-#warn"$i, $f, $c, $p\n";
+        my $from = $args{-as_field}
+            ? Chess::Rep::get_field_id($piece->{from})
+            : $piece->{from};
 
-            $cover->{$f}{index} = $i;
+        for my $t (@{$piece->{to}}) {
+#            $cover->{$from}{controls} = $args{-as_field}
+#                ? [map { Chess::Rep::get_field_id($_) } @{$piece->{to}}]
+#                : $piece->{to};
 
-            my $moves = [];
+            my @at = $self->get_piece_at($t);
+            push @{$cover->{$from}{$action}}, ($args{-as_field}
+                ? Chess::Rep::get_field_id($at[1])
+                : $at[1]) if $at[0];
+        }
 
-            if ($p) {
-                $cover->{$f}{occupant} = $name{$p} .' '. $p;
-                $moves = [ map { $_->{to} } grep { $_->{from} == $i } @$status ];
-                $cover->{$f}{move} = $moves if @$moves;
-                for my $m (@{$cover->{$f}{move}}) {
-                    my $x = $self->get_piece_at_index($m);
-                    push @{$cover->{$f}{threatens}}, $m if $x;
-                }
-            }
-
-            for my $color (0, 0x80) {
-                $cover->{$f}{ $c == $color ? 'protected' : 'threatened' }++
-                    if $p && $self->is_attacked($i, $color);
-            }
+        if (!$args{-protection}) {
+            my $p = $self->_protects(-as_field => $args{-as_field}, -piece => $piece);
+            push @{$cover->{$from}{protects}}, @$p if defined $p;
         }
     }
 
-    return $cover;
+    return $cover; 
+}
+
+sub _protects { # Flip enemies and compute protection.
+    my $self = shift;
+    my %args = (
+        -as_field => 0,
+        @_
+    );
+    my $piece = $args{-piece} || return undef;
+
+    my $cover = {};
+
+    my $f = $self->get_fen;
+    my @f = split / /, $f, 2;
+    my $n = '';
+    for (split //, $f[0]) {
+        if (/[pnkbrq]/) {
+            $n .= uc $_
+        }
+        elsif (/[PNKBRQ]/) {
+            $n .= lc $_
+        }
+        else {
+            $n .= $_
+        }
+    }
+    $f = $n . ' ' . $f[1];
+
+    my $from = $args{-as_field}
+        ? Chess::Rep::get_field_id($piece->{from})
+        : $piece->{from};
+
+    my $p = Chess::Rep::Coverage->new($f);
+    $p->set_piece_at($piece->{from}, $piece->{piece});
+    $p->compute_valid_moves;
+    $cover = $p->covers(-as_field => $args{-as_field}, -protection => 1);
+
+    return $cover->{$from}{protects};
+}
+
+sub _dump_coverage {
+    my $self = shift;
+    warn"- Under construction - Until then, here's what we have:\n";
+    print $self->dump_pos, "\n";
 }
 
 1;
@@ -68,45 +99,33 @@ Chess::Rep::Coverage - Expose chess ply potential energy
 =head1 SYNOPSIS
 
   use Chess::Rep::Coverage;
-  $g = Chess::Rep::Coverage->new();
-  $c = $g->coverage();
+  $g = Chess::Rep::Coverage->new;
+  $c = $g->covers;
+  # ...
 
 =head1 DESCRTIPTION
 
 This module exposes the "potential energy" of a chess ply by returning
-a hash reference of the board positions, pieces and their "attack
-status."
-
-* This module was a lot more complicated and slower, in the past.
-Modern chess packages have allowed me to simplify this over time.
-
-* Previous versions of this module B<listed> the board positions that
-threatened or protected a given position.  This module does the
-reverse (for the moment) and shows if positions are threatened or
-protected with a simple true value.
+a hash reference of the board positions and their "attack status",
+based on the occupying piece.
 
 =head1 METHODS
 
 =head2 new()
 
-Return a new C<Chess::Coverage> object as a subclass of L<Chess::Rep>.
+Subclass L<Chess::Rep>.
 
-=head2 coverage()
+=head2 covers()
 
-Return a data structure, keyed on board position, showing
+Return a data structure, keyed on board index or position (a "field"),
+with:
 
-  occupant   => Human readable string of the piece name and color
-  index      => The C<Chess::Rep/Position> board position index.
-  move       => List of positions that are legal moves by the occupying piece
-  protected  => True (1) if the occupying piece is protected by its own color
-  threatened => True (1) if the occupying piece is threatened by the opponent
+  protects => [squares occupied by protected allies]
+  attacks  => [squares occupied by attacted opponents]
 
 =head1 TO DO
 
-Get C<Chess::Rep> to return the indices of the attackers.
-
-Make additional methods (or plugins) produce images and animations of
-the coverage.
+Make additional methods to produce coverage images and animations.
 
 =head1 SEE ALSO
 
@@ -118,7 +137,7 @@ Gene Boggs E<lt>gene@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright 2007-2008, Gene Boggs.
+Copyright 2007-2010, Gene Boggs
 
 This code is licensed under the same terms as Perl itself.
 
