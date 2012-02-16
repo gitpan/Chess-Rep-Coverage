@@ -1,7 +1,8 @@
-Changes file for Chess::Coverage
+Revision history for Chess-Rep-Coverage
 
 0.05_01
-    - Rewrote and seemingly fixed everything.
+    - Refactored for Dist::Zilla
+    - Rewrote and tried to fix the protects list...
 
 0.0403 2009.01.23
     - Fixed the t/boilerplate code.

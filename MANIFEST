@@ -1,14 +1,16 @@
-CHANGES
-eg/chess-rep
-eg/play
-lib/Chess/Rep/Coverage.pm
+Changes
+Chess-Rep-Coverage/Changes
+Chess-Rep-Coverage/board.txt
+Chess-Rep-Coverage/dist.ini
+Chess-Rep-Coverage/lib/Chess/Rep/Coverage.pm
+Chess-Rep-Coverage/t/00-load.t
+Chess-Rep-Coverage/t/01-methods.t
+LICENSE
+MANIFEST
+META.yml
 Makefile.PL
-MANIFEST			This list of files
-MANIFEST.SKIP
 README
+dist.ini
+lib/Chess/Rep/Coverage.pm
 t/00-load.t
 t/01-methods.t
-t/boilerplate.t
-t/pod-coverage.t
-t/pod.t
-META.yml                                 Module meta-data (added by MakeMaker)

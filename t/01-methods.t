@@ -1,44 +1,51 @@
 #!perl -T
 use strict;
 use warnings;
-use Data::Dumper;local$Data::Dumper::Indent=1;local$Data::Dumper::Terse=1;local$Data::Dumper::Sortkeys=1;
-use Test::More tests => 7;
+use Test::More 'no_plan';
+
 BEGIN { use_ok('Chess::Rep::Coverage') }
-my $g = eval { Chess::Rep::Coverage->new };
+
+my $g = eval { Chess::Rep::Coverage->new() };
+print $@ if $@;
 isa_ok $g, 'Chess::Rep::Coverage';
-diag('Making a series of moves...');
-my $x = $g->go_move('PD4'); # w
-   $x = $g->go_move('PC5'); # b
-   $x = $g->go_move('NF3'); # w
-   $x = $g->go_move('PE5'); # b
-my $c = $g->covers(-as_field => 1);
+
+my $fen = Chess::Rep::FEN_STANDARD; # Default starting position
+diag($fen);
+my $c = $g->coverage();
 isa_ok $c, 'HASH';
-diag($g->to_move ? 'W' : 'b', ' to move');
-diag(join("\n",    '|A|B|C|D|E|F|G|H|', '-' x 17));     # Legend:
-# |r|n|b|q|k|b|n|r|8| | | | | | | | |8|0|1|1|1|1|1|1|0| # | | uncontrolled cell
-# |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-| # |/| white controlled
-# |p|p| |p| |p|p|p|7| | | | | | | | |7|1|1|\|3|\|1|1|1| # |\| black controlled
-# |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-| # |0| protected by no pieces
-# | | | | | | | | |6| | | | | | | |/|6|\|\|\|\|\|\|\|\| # |1| protected by one piece
-# |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-| # |2| protected by two pieces, etc.
-# | | |p| |p| | | |5| | !1| !2| |/| |5| | |1| |0| |\| | # !3| attacked opponent by three pieces!
-# |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-|
-# | | | |P| | | | |4| | | |2| |/| | |4| |\| !2| |\| |\|
-# |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-|
-# | | | | | |N| | |3|/|/|/|/|/|2|/|/|3| | | | | | | | |
-# |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-|
-# |P|P|P| |P|P|P|P|2|1|1|1|/|3|1|1|2|2| | | | | | | | |
-# |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-| |-+-+-+-+-+-+-+-|
-# |R|N|B|Q|K|B| |R|1|0|1|1|1|2|2|/|0|1| | | | | | | | |
-diag($g->dump_pos);
-#warn Dumper($c);
-my $i = 'D4';   # white pawn
-my $j = 'attacks';
-is_deeply $c->{$i}{$j}, [qw(E5 C5)], "$i $j [@{$c->{$i}{$j}}]";
-$j = 'protects';
-ok !exists $c->{$i}{$j}, "$i $j nothing";
-$i = 'F3';      # white knight
-$j = 'attacks';
-is_deeply $c->{$i}{$j}, ['E5'], "$i $j [@{$c->{$i}{$j}}]";
-$j = 'protects';
-is_deeply $c->{$i}{$j}, [qw(D4 H2 E1)], "$i $j [@{$c->{$i}{$j}}]";
+is $c->{H8}{occupant}, 'r', 'H8 occupant';
+is $c->{H8}{piece}, 16, 'H8 piece';
+is $c->{H8}{color}, 0, 'H8 color';
+is $c->{H8}{index}, 119, 'H8 index';
+is_deeply $c->{H8}{move}, [103, 118], 'H8 move';
+is_deeply $c->{H8}{protects}, [103, 118], 'H8 protects';
+
+#$fen = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1'; # after the move 1. e4
+#$fen = 'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2'; # after 1. ... c5
+#$fen = 'rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2'; # after 2. Nf3
+
+$fen = '8/8/8/3pr3/4P3/8/8/8 w ---- - 0 1'; # 3 pieces, w/b pawn mutual threat, black rook threat
+diag($fen);
+$g->set_from_fen($fen);
+$c = $g->coverage();
+is_deeply $c->{D5}{move}, [51, 52], 'D5 move';
+is_deeply $c->{D5}{threatens}, [52], 'D5 threatens';
+is_deeply $c->{E4}{move}, [67], 'E4 move';
+is_deeply $c->{E4}{threatens}, [67], 'E4 threatens';
+is_deeply $c->{E5}{move}, [qw(69 70 71 84 100 116 52 67)], 'E5 move';
+is_deeply $c->{E5}{protects}, [67], 'E5 protects';
+is_deeply $c->{E5}{threatens}, [52], 'E5 threatens';
+
+#$fen = '8/8/8/8/8/8/8/8 w ---- - 0 1'; # No pieces
+#$fen = '8/8/8/3p4/8/8/8/8 w ---- - 0 1'; # 1 black piece
+#$fen = '8/8/8/8/4P3/8/8/8 w ---- - 0 1'; # 1 white piece
+#$fen = 'pppppppp/pppppppp/pppppppp/pppppppp/pppppppp/pppppppp/pppppppp/pppppppp b ---- - 0 1';
+#$fen = 'r6R/8/8/8/8/8/8/8 w ---- - 0 1'; # Opposing rooks
+#$fen = 'r7/P7/8/8/8/8/8/8 w ---- - 0 1'; # black rook threatens white pawn
+#$fen = '1p6/P7/8/8/8/8/8/8 w ---- - 0 1'; # black pawn vs white pawn
+#$fen = '8/8/8/3p4/4P3/8/8/8 w ---- - 0 1'; # 2 pieces, w/b pawn mutual threat
+#$fen = '8/8/8/3Pr3/8/8/8/8 w ---- - 0 1'; # 2 pieces, single black threat
+#$fen = '8/8/8/3pr3/8/8/8/8 w ---- - 0 1'; # 2 pieces, single black protection
+#$fen = 'rp6/P7/8/8/8/8/8/8 w ---- - 0 1'; # 3 pieces, w/b pawn mutual threat, black rook threat
+
+#use Data::Dumper;warn Data::Dumper->new([$c])->Indent(1)->Terse(1)->Sortkeys(1)->Dump;

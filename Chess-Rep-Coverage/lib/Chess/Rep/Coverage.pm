@@ -12,14 +12,13 @@ use warnings;
 
 use base 'Chess::Rep';
 
-our $VERSION = '0.06';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 
   use Chess::Rep::Coverage;
   $g = Chess::Rep::Coverage->new();
   $c = $g->coverage();
-  warn Data::Dumper->new([$c])->Indent(1)->Terse(1)->Sortkeys(1)->Dump;
 
 =head1 DESCRIPTION
 
@@ -39,48 +38,48 @@ Return a new C<Chess::Coverage> object.
 
 Return a data structure, keyed on board position, showing
 
-  occupant  => Human readable string of the piece name
-  color     => Color name of the occupant
-  index     => The C<Chess::Rep/Position> board position index
-  move      => List of positions that are legal moves by the occupying piece
-  protects  => True (1) if the occupying piece is protected by its own color
-  threatens => True (1) if the occupying piece is threatened by the opponent
+  occupant   => Human readable string of the piece name
+  color      => Color name of the occupant
+  index      => The C<Chess::Rep/Position> board position index
+  move       => List of positions that are legal moves by the occupying piece
+  protected  => True (1) if the occupying piece is protected by its own color
+  threatened => True (1) if the occupying piece is threatened by the opponent
 
 =cut
 
 sub coverage {
     my $self = shift;
 
-    # What is the state of our board?
     my $fen = $self->get_fen();
+#warn"Original FEN: $fen\n";
 
-    # Return a bucket of piece coverages.
     my $cover = {};
 
-    # Get the set of pieces and ids.
     my %pieces;
     @pieces{values %{+Chess::Rep::PIECE_TO_ID()}} = keys %{+Chess::Rep::PIECE_TO_ID()};
 
-    # Look at each board position.
     for my $row (0 .. 7) {
         for my $col (0 .. 7) {
-            my $p = $self->get_piece_at($row, $col); # decimal of index
+            my $p = $self->get_piece_at($row, $col) || ''; # decimal of index
             if ($p) {
                 my $c = Chess::Rep::piece_color($p); # 0=black, 0x80=white
                 my $i = Chess::Rep::get_index($row, $col); # $row << 4 | $col
                 my $f = Chess::Rep::get_field_id($i); # A-H, 1-8
+#warn"Piece: $p I: $i, F: $f, C: $c\n";
 
                 $cover->{$f}{occupant} = $pieces{$p};
                 $cover->{$f}{piece} = $p;
                 $cover->{$f}{color} = $c;
                 $cover->{$f}{index} = $i;
 
-                # Invert the FEN to compute all possible moves, threats and protections.
-                my $inverted = _invert_fen($fen, $row, $col, $c);
-                $self->set_from_fen($inverted);
-
-                # Set the "next to move" color to the piece.
+                # Swap the "next to move" color to the piece
                 $self->to_move($c);
+#warn"$cover->{$f}{occupant} ($c) to move: ",$self->to_move,"\n";
+
+                # Invert the FEN to compute all possible moves, threasts and protections.
+#                my $inverted_fen = _invert_fen($fen, $row, $col, $c);
+#                $self->set_from_fen($inverted_fen);
+#warn"New: $new_fen\n";
 
                 # Recompute the move status.
                 $self->compute_valid_moves;
@@ -88,16 +87,14 @@ sub coverage {
                 my $moves = [ map { $_->{to} } grep { $_->{from} == $i } @{ $self->status->{moves} } ];
 
                 # Reset original game FEN.
-                $self->set_from_fen($fen);
+#                $self->set_from_fen($fen);
 
                 # Find the threats and protections.
                 if (@$moves) {
                     $cover->{$f}{move} = $moves;
-
                     for my $m (@$moves) {
                         my $x = $self->get_piece_at($m) || '';
                         next unless $x;
-
                         if (Chess::Rep::piece_color($x) == $c) {
                             push @{$cover->{$f}{protects}}, $m;
                         }
@@ -117,42 +114,40 @@ sub _invert_fen {
     my ($fen, $row, $col, $color) = @_;
 
     # Grab the board positions only.
-    my $suffix = '';
-    if ($fen =~ /^(.+?)\s(.*)$/) {
-        ($fen, $suffix) = ($1, $2);
-    }
+    $fen =~ s/^(.+?)\s.*$/$1/;
+#warn"[$color, $row, $col] FEN: '$fen'\n";
     # Convert pieces to all black or all white, given the piece color.
     $fen = $color ? lc $fen : uc $fen;
     # Split the FEN into rows.
     my @fen = split /\//, $fen; # rows: 7..0, cols: 0..7
     # The FEN sections are the rows reversed.
     $row = 7 - $row;
+#warn"$fen[$row]\n";
 
-    my $position = 0;
-    my $counter = 0;
-    # Inspect each character in the row to find the position of the piece to invert.
+    # Find the position of the piece to invert.
+    my $n = 0;
+    my $p = 0;
     for my $i (split //, $fen[$row]) {
-        # Increment the position if we are on a digit.
+#warn"1 n: $n, p: $p\n";
         if ($i =~ /^\d$/) {
-            $position += $i;
+            $n += $i;
         }
         else {
-            # Invert the piece character (to its original state) or increment the position.
-            if ($position == $col) {
-                substr($fen[$row], $counter, 1) = $i ^ "\x20";
+            if ($n == $row) {
+#warn"P($n): $i\n";
+                substr($fen[$row], $p, 1) = $i ^ "\x20";
                 last;
             }
             else {
-                # Next!
-                $position++;
+                $n++;
             }
         }
 
-        # Increment the loop counter.
-        $counter++;
+        $p++;
+#warn"2 n: $n, p: $p\n";
     }
 
-    return join('/', @fen) . " $suffix";
+    return join '/', @fen;
 }
 
 1;
@@ -160,7 +155,10 @@ __END__
 
 =head1 TO DO
 
-Make images and animations of coverage(s).
+Get C<Chess::Rep> to return the indices of the protectors.
+
+Make additional methods (or plugins) produce images and animations of
+the coverage.
 
 =head1 SEE ALSO
 
