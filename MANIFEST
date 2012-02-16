@@ -1,10 +1,4 @@
 Changes
-Chess-Rep-Coverage/Changes
-Chess-Rep-Coverage/board.txt
-Chess-Rep-Coverage/dist.ini
-Chess-Rep-Coverage/lib/Chess/Rep/Coverage.pm
-Chess-Rep-Coverage/t/00-load.t
-Chess-Rep-Coverage/t/01-methods.t
 LICENSE
 MANIFEST
 META.yml

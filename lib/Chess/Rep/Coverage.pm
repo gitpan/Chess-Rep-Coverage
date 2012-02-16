@@ -12,7 +12,7 @@ use warnings;
 
 use base 'Chess::Rep';
 
-our $VERSION = '0.06';
+our $VERSION = '0.0601';
 
 =head1 SYNOPSIS
 
