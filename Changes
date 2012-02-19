@@ -1,5 +1,8 @@
 Revision history for Chess-Rep-Coverage
 
+0.0801 2012.02.19
+    - Fix documentation
+
 0.08 2012.02.19
     - Implemented the special case logic for kings.
     - Modularized duplicated code.

@@ -12,7 +12,7 @@ use warnings;
 
 use base 'Chess::Rep';
 
-our $VERSION = '0.08';
+our $VERSION = '0.0801';
 
 =head1 SYNOPSIS
 
@@ -23,7 +23,6 @@ our $VERSION = '0.08';
 
   $g->set_from_fen('8/8/8/3pr3/4P3/8/8/8 w ---- - 0 1');
   $c = $g->coverage(); # Recalculate board status
-  print Dump($c);
   print $g->board();
 
 =head1 DESCRIPTION
@@ -40,7 +39,7 @@ Return a new C<Chess::Coverage> object.
 
 =head2 coverage()
 
-  $x = Chess::Rep::Coverage::coverage();
+  $c = $gcoverage();
 
 Set the C<cover> attribute and return a data structure, keyed on board
 position, showing
@@ -80,6 +79,7 @@ sub coverage {
                 my $i = Chess::Rep::get_index($row, $col); # $row << 4 | $col
                 my $f = Chess::Rep::get_field_id($i); # A-H, 1-8
 
+                # Set the coverage properties for the piece.
                 $cover->{$f}{occupant} = $pieces{$p};
                 $cover->{$f}{piece} = $p;
                 $cover->{$f}{color} = $c;
@@ -199,15 +199,6 @@ sub _invert_fen {
     return join('/', @fen) . " $suffix";
 }
 
-=head2 cover()
-
-  $self->cover($c);
-  $c = $self->cover();
-
-Accessor for the game coverage.
-
-=cut
-
 sub _fetch_new_moves {
     my $self = shift;
     my($field, $index, $color) = @_;
@@ -222,6 +213,7 @@ sub _fetch_new_moves {
 sub _set_piece_status {
     my $self = shift;
     my($cover, $field, $index, $color) = @_;
+    # Only consider positions with pieces.
     my $p = $self->get_piece_at($index);
     return unless $p;
     # Set the protection or threat status of the piece.
@@ -231,9 +223,19 @@ sub _set_piece_status {
             unless $p == 4 or $p == 132;
     }
     else {
+        # Any piece can be threatened.
         push @{$cover->{$field}{threatens}}, $index;
     }
 }
+
+=head2 cover()
+
+  $self->cover($c);
+  $c = $self->cover();
+
+Accessor for the game coverage.
+
+=cut
 
 sub cover {
     my $self = shift;
