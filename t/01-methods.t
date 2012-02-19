@@ -28,13 +28,44 @@ $fen = '8/8/8/3pr3/4P3/8/8/8 w ---- - 0 1'; # 3 pieces, w/b pawn mutual threat, 
 diag($fen);
 $g->set_from_fen($fen);
 $c = $g->coverage();
+is_deeply $c->{D4}{black_can_move_here}, [67], 'D4 black_can_move_here';
+is_deeply $c->{D4}{white_can_move_here}, [], 'D4 white_can_move_here';
 is_deeply $c->{D5}{move}, [51, 52], 'D5 move';
 is_deeply $c->{D5}{threatens}, [52], 'D5 threatens';
+is_deeply $c->{D5}{is_protected_by}, [68], 'D5 is_protected_by';
+is_deeply $c->{D5}{is_threatened_by}, [52], 'D5 is_threatened_by';
 is_deeply $c->{E4}{move}, [67], 'E4 move';
 is_deeply $c->{E4}{threatens}, [67], 'E4 threatens';
+is_deeply $c->{E4}{is_protected_by}, [], 'E4 is_protected_by';
+is_deeply $c->{E4}{is_threatened_by}, [67, 68], 'E4 is_threatened_by';
 is_deeply $c->{E5}{move}, [qw(69 70 71 84 100 116 52 67)], 'E5 move';
 is_deeply $c->{E5}{protects}, [67], 'E5 protects';
 is_deeply $c->{E5}{threatens}, [52], 'E5 threatens';
+is_deeply $c->{E5}{is_protected_by}, [], 'E5 is_protected_by';
+is_deeply $c->{E5}{is_threatened_by}, [], 'E5 is_threatened_by';
+
+my $w = q{     A     B     C     D     E     F     G     H
+  +-----+-----+-----+-----+-----+-----+-----+-----+
+1 |     |     |     |     |     |     |     |     |
+  +-----+-----+-----+-----+-----+-----+-----+-----+
+2 |     |     |     |     |     |     |     |     |
+  +-----+-----+-----+-----+-----+-----+-----+-----+
+3 |     |     |     |     |     |     |     |     |
+  +-----+-----+-----+-----+-----+-----+-----+-----+
+4 |     |     |     | 0:1 | 0/2 |     |     |     |
+  +-----+-----+-----+-----+-----+-----+-----+-----+
+5 |     |     |     | 1/1 | 0/0 | 0:1 | 0:1 | 0:1 |
+  +-----+-----+-----+-----+-----+-----+-----+-----+
+6 |     |     |     |     | 0:1 |     |     |     |
+  +-----+-----+-----+-----+-----+-----+-----+-----+
+7 |     |     |     |     | 0:1 |     |     |     |
+  +-----+-----+-----+-----+-----+-----+-----+-----+
+8 |     |     |     |     | 0:1 |     |     |     |
+  +-----+-----+-----+-----+-----+-----+-----+-----+
+};
+
+my $b = $g->board();
+is $b, $w, 'board';
 
 #$fen = '8/8/8/8/8/8/8/8 w ---- - 0 1'; # No pieces
 #$fen = '8/8/8/3p4/8/8/8/8 w ---- - 0 1'; # 1 black piece

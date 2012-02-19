@@ -1,5 +1,9 @@
 Revision history for Chess-Rep-Coverage
 
+0.0701 2012.02.19
+    - Updated dist.ini
+    - Added tests for new statuses and the board() method.
+
 0.07 2012.02.19
     - Added a cover() accessor.
     - Compute the "is_protected_by" and "is_threatened_by" status for each piece.
