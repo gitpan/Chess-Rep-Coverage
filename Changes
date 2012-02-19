@@ -1,14 +1,19 @@
 Revision history for Chess-Rep-Coverage
 
-0.0601
+0.07 2012.02.19
+    - Added a cover() accessor.
+    - Compute the "is_protected_by" and "is_threatened_by" status for each piece.
+    - Compute the "can_move_here" status for each piece by player.
+    - Render an ASCII status board.
+
+0.0601 2012.02.15
     - Removed nested duplicate.
 
-0.06
-    - Messed-up version numbering... but that's okay.
-    - Made protection work properly
+0.06 2012.02.15
+    - Made protection work properly.
 
-0.05_01
-    - Refactored for Dist::Zilla
+0.05_01 2010.01.30
+    - Refactored for Dist::Zilla.
     - Rewrote and tried to fix the protects list...
 
 0.0403 2009.01.23
@@ -17,7 +22,6 @@ Revision history for Chess-Rep-Coverage
 0.0402 2009.01.23
     - Fixed the coverage() moves code.
     - Enhanced existing test but normalized them and added pod coverage.
-    - Removed the useless eg/ directory.
 
 0.0401 2008.08.04
     - This is a subclass Chess::Rep.e. Chess::Coverage).
@@ -29,20 +33,18 @@ Revision history for Chess-Rep-Coverage
 0.03 2008.08.03
     - Improved the occupant naming.
     - Replaced _get_allowed_moves() with map grep status().
-    - print, not die in eg/tester.
 
 0.02 2008.08.02
     - Refactored to accommodate the new Chess::Rep API.
-    - Fixed the constructor FEN in eg/tester.
 
 0.01 2008.08.02
-    - Fixed the moves array computation, a bit.
-    - Forgot the crucial, final 1; # Oops!
+    - Fixed the moves array computation.
+    - Added the crucial, final "1;" # Oops!
 
 0.01 2008.08.02
     - Scrapped everything but the interface when I saw that the
       Chess::Rep module could do what I wanted with less code and in
-      about 1/5th the execution speed.
+      a fraction of the execution speed.
 
 0.00_4 2007.07.02
     - Fixed the coverage() function.

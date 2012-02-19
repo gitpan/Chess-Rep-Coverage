@@ -18,4 +18,7 @@ requires:
   base: 0
   strict: 0
   warnings: 0
-version: 0.0601
+resources:
+  bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=Chess-Rep-Coverage
+  repository: https://github.com/ology/Games/tree/master/Chess-Rep-Coverage
+version: 0.07

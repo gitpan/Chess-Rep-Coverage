@@ -49,3 +49,8 @@ is_deeply $c->{E5}{threatens}, [52], 'E5 threatens';
 #$fen = 'rp6/P7/8/8/8/8/8/8 w ---- - 0 1'; # 3 pieces, w/b pawn mutual threat, black rook threat
 
 #use Data::Dumper;warn Data::Dumper->new([$c])->Indent(1)->Terse(1)->Sortkeys(1)->Dump;
+
+my $x = $g->cover();
+is_deeply $x, $c, 'cover accessor';
+$x = $g->cover({});
+is_deeply $x, {}, 'cover set';
