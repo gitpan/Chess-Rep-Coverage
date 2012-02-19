@@ -12,7 +12,7 @@ use warnings;
 
 use base 'Chess::Rep';
 
-our $VERSION = '0.0701';
+our $VERSION = '0.08';
 
 =head1 SYNOPSIS
 
@@ -87,56 +87,56 @@ sub coverage {
                 $cover->{$f}{protects} = [];
                 $cover->{$f}{threatens} = [];
 
-                # Invert the FEN to compute all possible moves, threats and protections.
-                my $inverted = _invert_fen($fen, $row, $col, $c);
-                $self->set_from_fen($inverted);
+                # Kings are special-cased.
+                if ($p == 4 or $p == 132) {
+                    # Collect the moves of the piece.
+                    $cover->{$f}{move} = $self->_fetch_new_moves($f, $i, $c);
 
-                # Set the "next to move" color to the piece.
-                $self->to_move($c);
-
-                # Recompute the move status.
-                $self->compute_valid_moves;
-                # Collect the moves of the piece.
-                my $moves = [ map { $_->{to} } grep { $_->{from} == $i } @{ $self->status->{moves} } ];
-
-                # Reset original game FEN.
-                $self->set_from_fen($fen);
-
-                # Find the threats and protections by the piece.
-                if (@$moves) {
-                    $cover->{$f}{move} = $moves;
-
-                    for my $m (@$moves) {
-                        my $x = $self->get_piece_at($m) || '';
-                        next unless $x;
-
-                        if (Chess::Rep::piece_color($x) == $c) {
-                            push @{$cover->{$f}{protects}}, $m;
-                        }
-                        else {
-                            push @{$cover->{$f}{threatens}}, $m;
-                        }
+                    # Inspect the positions surrounding the king.
+                    for my $m ([$row, $col + 1], [$row + 1, $col], [$row + 1, $col + 1], [$row + 1, $col - 1],
+                               [$row, $col - 1], [$row - 1, $col], [$row - 1, $col - 1], [$row - 1, $col + 1]
+                    ) {
+                        my $x = Chess::Rep::get_index(@$m);
+                        next if $x & 0x88;
+                        $self->_set_piece_status($cover, $f, $x, $c);
                     }
+                }
+                else {
+                    # Invert the FEN to compute all possible moves, threats and protections.
+                    my $inverted = _invert_fen($fen, $row, $col, $c);
+                    $self->set_from_fen($inverted);
+
+                    # Collect the moves of the piece.
+                    $cover->{$f}{move} = $self->_fetch_new_moves($f, $i, $c);
+
+                    # Reset original game FEN.
+                    $self->set_from_fen($fen);
+
+                    # Find the threats and protections by the piece.
+                    $self->_set_piece_status($cover, $f, $_, $c) for @{$cover->{$f}{move}};
                 }
             }
         }
     }
 
-    # Compute protection and threat status of each piece and move status of positions.
+    # Compute piece and position status.
     for my $piece (keys %$cover) {
         $cover->{$piece}{is_threatened_by} ||= [];
         $cover->{$piece}{is_protected_by} ||= [];
 
+        # Compute protection status of a piece.
         for my $index (@{$cover->{$piece}{protects}}) {
             my $f = Chess::Rep::get_field_id($index); # A-H, 1-8
             push @{$cover->{$f}{is_protected_by}}, $cover->{$piece}{index};
         }
 
+        # Compute threat status of a piece.
         for my $index (@{$cover->{$piece}{threatens}}) {
             my $f = Chess::Rep::get_field_id($index); # A-H, 1-8
             push @{$cover->{$f}{is_threatened_by}}, $cover->{$piece}{index};
         }
 
+        # Compute move status of a position.
         for my $index (@{$cover->{$piece}{move}}) {
             my $p = $self->get_piece_at($index);
             if (!$p) {
@@ -207,6 +207,33 @@ sub _invert_fen {
 Accessor for the game coverage.
 
 =cut
+
+sub _fetch_new_moves {
+    my $self = shift;
+    my($field, $index, $color) = @_;
+    # Set the "next to move" color to the piece.
+    $self->to_move($color);
+    # Recompute the move status.
+    $self->compute_valid_moves;
+    # Collect the moves of the piece.
+    return [ map { $_->{to} } grep { $_->{from} == $index } @{ $self->status->{moves} } ];
+}
+
+sub _set_piece_status {
+    my $self = shift;
+    my($cover, $field, $index, $color) = @_;
+    my $p = $self->get_piece_at($index);
+    return unless $p;
+    # Set the protection or threat status of the piece.
+    if (Chess::Rep::piece_color($p) == $color) {
+        # Any piece can be protected but a king.
+        push @{$cover->{$field}{protects}}, $index
+            unless $p == 4 or $p == 132;
+    }
+    else {
+        push @{$cover->{$field}{threatens}}, $index;
+    }
+}
 
 sub cover {
     my $self = shift;
@@ -283,6 +310,7 @@ sub board {
                     my $protects = $self->cover()->{$col . $row}->{is_protected_by};
                     my $threats  = $self->cover()->{$col . $row}->{is_threatened_by};
                     $board .= @$protects . '/' . @$threats;
+#                    $board .= $self->cover()->{$col . $row}->{occupant};
                 }
                 elsif (exists $self->cover()->{$col . $row}->{white_can_move_here} and
                        exists $self->cover()->{$col . $row}->{black_can_move_here}
@@ -291,6 +319,7 @@ sub board {
                     my $whites = $self->cover()->{$col . $row}->{white_can_move_here};
                     my $blacks = $self->cover()->{$col . $row}->{black_can_move_here};
                     $board .= @$whites . ':' . @$blacks;
+#                    $board .= $self->cover()->{$col . $row}->{occupant};
                 }
             }
             else {
