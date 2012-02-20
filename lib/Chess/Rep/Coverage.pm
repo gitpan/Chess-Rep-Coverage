@@ -12,7 +12,7 @@ use warnings;
 
 use base 'Chess::Rep';
 
-our $VERSION = '0.0801';
+our $VERSION = '0.0802';
 
 =head1 SYNOPSIS
 
@@ -152,7 +152,7 @@ sub coverage {
     }
 
     # Set the object coverage attribute.
-    $self->cover($cover);
+    $self->_cover($cover);
 
     return $cover;
 }
@@ -228,16 +228,7 @@ sub _set_piece_status {
     }
 }
 
-=head2 cover()
-
-  $self->cover($c);
-  $c = $self->cover();
-
-Accessor for the game coverage.
-
-=cut
-
-sub cover {
+sub _cover {
     my $self = shift;
     $self->{cover} = shift if @_;
     return $self->{cover};
@@ -276,10 +267,10 @@ as:
     +-----+-----+-----+-----+-----+-----+-----+-----+
 
 This means that, 1) the black pawn at D5 can move to D4 and can
-capture the white pawn at E4; 2) the white pawn at E4 can neither move
-nor capture; 3) the black rook at E5 protects the black pawn at D5,
-can capture the white pawn at E4 and can move to F5 through H5 or E6
-through E8.
+capture the white pawn at E4; 2) the white pawn at E4 can capture the
+pawn at D5 but cannot move; 3) the black rook at E5 protects the black
+pawn at D5, can capture the white pawn at E4 and can move to F5
+through H5 or E6 through E8.
 
 =cut
 
@@ -288,7 +279,7 @@ sub board {
     my %args = @_;
 
     # Compute coverage if has not been done yet.
-    $self->coverage() unless $self->cover();
+    $self->coverage() unless $self->_cover();
 
     # Start rendering the board.
     my $board = _ascii_board('header');
@@ -304,24 +295,24 @@ sub board {
             $board .= _ascii_board('new_cell');
 
             # Inspect the coverage at the column and row position.
-            if ($self->cover()->{$col . $row}) {
-                if (exists $self->cover()->{$col . $row}->{is_protected_by} and
-                    exists $self->cover()->{$col . $row}->{is_threatened_by}
+            if ($self->_cover()->{$col . $row}) {
+                if (exists $self->_cover()->{$col . $row}->{is_protected_by} and
+                    exists $self->_cover()->{$col . $row}->{is_threatened_by}
                 ) {
                     # Show threat and protection status.
-                    my $protects = $self->cover()->{$col . $row}->{is_protected_by};
-                    my $threats  = $self->cover()->{$col . $row}->{is_threatened_by};
+                    my $protects = $self->_cover()->{$col . $row}->{is_protected_by};
+                    my $threats  = $self->_cover()->{$col . $row}->{is_threatened_by};
                     $board .= @$protects . '/' . @$threats;
-#                    $board .= $self->cover()->{$col . $row}->{occupant};
+#                    $board .= $self->_cover()->{$col . $row}->{occupant};
                 }
-                elsif (exists $self->cover()->{$col . $row}->{white_can_move_here} and
-                       exists $self->cover()->{$col . $row}->{black_can_move_here}
+                elsif (exists $self->_cover()->{$col . $row}->{white_can_move_here} and
+                       exists $self->_cover()->{$col . $row}->{black_can_move_here}
                 ) {
                     # Show player movement status.
-                    my $whites = $self->cover()->{$col . $row}->{white_can_move_here};
-                    my $blacks = $self->cover()->{$col . $row}->{black_can_move_here};
+                    my $whites = $self->_cover()->{$col . $row}->{white_can_move_here};
+                    my $blacks = $self->_cover()->{$col . $row}->{black_can_move_here};
                     $board .= @$whites . ':' . @$blacks;
-#                    $board .= $self->cover()->{$col . $row}->{occupant};
+#                    $board .= $self->_cover()->{$col . $row}->{occupant};
                 }
             }
             else {

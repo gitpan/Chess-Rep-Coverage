@@ -1,5 +1,9 @@
 Revision history for Chess-Rep-Coverage
 
+0.0802 2012.02.20
+    - Fix documentation
+    - Make cover() a private method.
+
 0.0801 2012.02.19
     - Fix documentation
 

@@ -108,8 +108,3 @@ is $b, $w, 'board';
 
 
 #use Data::Dumper;warn Data::Dumper->new([$c])->Indent(1)->Terse(1)->Sortkeys(1)->Dump;
-
-my $x = $g->cover();
-is_deeply $x, $c, 'cover accessor';
-$x = $g->cover({});
-is_deeply $x, {}, 'cover set';
