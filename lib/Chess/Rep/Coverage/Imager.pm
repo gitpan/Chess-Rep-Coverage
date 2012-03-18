@@ -17,7 +17,7 @@ use Imager::Fill;
 use Imager::Font;
 use Imager::Color;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -29,7 +29,7 @@ our $VERSION = '0.01';
 =head1 DESCRIPTION
 
 This module exposes the "potential energy" of a chess ply by writing
-an C<Imager> grapphic of the board positions, pieces and their "attack
+an C<Imager> graphic of the board positions, pieces and their "attack
 or protection status."
 
 =head1 METHODS
@@ -90,15 +90,19 @@ sub board {
         square_width  => 33,
 
         board_color         => '#FFFFFF', # white
-        border_color        => '#000000', # black
-        grid_color          => '#505050', # grey
+        border_color        => '#808080', # gray
+        grid_color          => '#C0C0C0', # silver
         letter_color        => '#000000', # black
-        white_move_color    => '#33FF33', # green
-        black_move_color    => '#FFFF00', # yellow
-        white_threat_color  => '#660000', # red
-        black_threat_color  => '#FFA500', # orange
-        white_protect_color => '#0000FF', # blue
-        black_protect_color => '#00FFFF', # cyan
+        white_move_color    => '#00FF00', # lime
+        black_move_color    => '#FDD017', # gold
+        white_threat_color  => '#00FF00', # lime
+#        white_threat_color  => '#F6358A', # violet red
+        black_threat_color  => '#FDD017', # gold
+#        black_threat_color  => '#6698FF', # sky blue
+        white_protect_color => '#00FF00', # lime
+#        white_protect_color => '#FAAFBE', # pink
+        black_protect_color => '#FDD017', # gold
+#        black_protect_color => '#ADA96E', # khaki
         white_arrow_color   => '#008000', # green
         black_arrow_color   => '#800080', # purple
         @_ # Argument averride
@@ -227,12 +231,12 @@ sub board {
 
             # Show protection status.
            if (exists $self->_cover()->{$position}->{is_protected_by}) {
-                my $i = 1;
+                my $i = 0;
                 for my $pos (@{ $self->_cover()->{$position}{is_protected_by} }) {
                     my $piece = $self->get_piece_at($pos); # decimal of index
                     my $color = Chess::Rep::piece_color($piece); # 0=black, 0x80=white
                     $board->circle(
-                        r      => $i,
+                        r      => $i * 2 + 1,
                         x      => $xmin + ($args{square_width} / 2),
                         y      => $ymin + ($args{square_height} / 2),
                         color  => $color ? $args{white_protect_color} : $args{black_protect_color},
@@ -243,12 +247,12 @@ sub board {
            }
             # Show threat status.
             if (exists $self->_cover()->{$position}->{is_threatened_by}) {
-                my $i = 1;
+                my $i = 0;
                 for my $pos (@{ $self->_cover()->{$position}{is_threatened_by} }) {
                     my $piece = $self->get_piece_at($pos); # decimal of index
                     my $color = Chess::Rep::piece_color($piece); # 0=black, 0x80=white
                     $board->circle(
-                        r      => $i * 2,
+                        r      => $i * 2 + 2,
                         x      => $xmin + ($args{square_width} / 2),
                         y      => $ymin + ($args{square_height} / 2),
                         color  => $color ? $args{white_threat_color} : $args{black_threat_color},

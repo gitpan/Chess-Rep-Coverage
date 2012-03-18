@@ -1,5 +1,9 @@
 Revision history for Chess-Rep-Coverage
 
+0.0901 2012.03.17
+    - Adjust the attack/protect concentric circles to make them more visually obvious.
+    - Simplified the default status colors and regenerated the example images.
+
 0.09 2012.03.17
     - Add an Imager subclass and graphical board.
     - Show colored move, threat and protection status.
