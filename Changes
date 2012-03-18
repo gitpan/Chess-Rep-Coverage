@@ -1,5 +1,10 @@
 Revision history for Chess-Rep-Coverage
 
+0.09 2012.03.17
+    - Add an Imager subclass and graphical board.
+    - Show colored move, threat and protection status.
+    - Reversed ASCII coverage board positions and markers to conform to convention.
+
 0.0802 2012.02.20
     - Fix documentation
     - Make cover() a private method.

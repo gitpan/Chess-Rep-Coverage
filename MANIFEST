@@ -6,5 +6,7 @@ Makefile.PL
 README
 dist.ini
 lib/Chess/Rep/Coverage.pm
+lib/Chess/Rep/Coverage/Imager.pm
 t/00-load.t
 t/01-methods.t
+t/03-imager.t

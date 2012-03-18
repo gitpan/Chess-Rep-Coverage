@@ -12,7 +12,7 @@ use warnings;
 
 use base 'Chess::Rep';
 
-our $VERSION = '0.0802';
+our $VERSION = '0.09';
 
 =head1 SYNOPSIS
 
@@ -286,7 +286,7 @@ sub board {
     $board .= _ascii_board('row');
 
     # Look at each board position.
-    for my $row (1 .. 8) {
+    for my $row (reverse(1 .. 8)) {
         # Render the beginning of the row.
         $board .= $row . _ascii_board('cell_pad');
 
@@ -358,14 +358,12 @@ sub _ascii_board {
 1;
 __END__
 
-=head1 TO DO
-
-Make images and animations of coverage(s).
-
 =head1 SEE ALSO
 
 * The code in the C<t/> directory.
 
 * L<Chess::Rep>
+
+* L<http://en.wikipedia.org/wiki/Forsyth-Edwards_Notation>
 
 =cut

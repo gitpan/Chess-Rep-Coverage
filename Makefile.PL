@@ -23,11 +23,15 @@ my %WriteMakefileArgs = (
   "NAME" => "Chess::Rep::Coverage",
   "PREREQ_PM" => {
     "Chess::Rep" => 0,
+    "Imager" => 0,
+    "Imager::Color" => 0,
+    "Imager::Fill" => 0,
+    "Imager::Font" => 0,
     "base" => 0,
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "0.0802",
+  "VERSION" => "0.09",
   "test" => {
     "TESTS" => "t/*.t"
   }
