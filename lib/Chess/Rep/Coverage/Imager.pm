@@ -17,7 +17,7 @@ use Imager::Fill;
 use Imager::Font;
 use Imager::Color;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
 
@@ -25,6 +25,11 @@ our $VERSION = '0.02';
 
   my $g = Chess::Rep::Coverage::Imager->new();
   $g->write('board', 'png');
+
+  $g->set_from_fen('8/8/8/3pr3/4P3/8/8/8 w ---- - 0 1');
+  $g->coverage(); # Recalculate coverage status
+  $g->board(); # Re-render the board.
+  $g->write('foo', 'png');
 
 =head1 DESCRIPTION
 
@@ -47,8 +52,10 @@ Return a new C<Chess::Coverage::Imager> object.
 sub write {
     my $self = shift;
     my ($name, $type) = @_;
+    my $filename = "$name.$type";
     $self->board() unless $self->{board};
-    $self->{board}->write(file => "$name.$type", type => $type);
+    $self->{board}->write(file => $filename, type => $type);
+    return -e $filename ? $filename : undef;
 }
 
 =head2 board()
@@ -63,13 +70,16 @@ graphically renders as:
 
 =begin HTML
 
-<p><img src="https://github.com/ology/Games/raw/master/Chess-Rep-Coverage/images/board-move-0.png" width="256" height="256" alt="white noise example"></p>
+<p><img src="https://github.com/ology/Games/raw/master/Chess-Rep-Coverage/images/board-move-0.png" alt="Starting positions"></p>
 
-<p><img src="https://github.com/ology/Games/raw/master/Chess-Rep-Coverage/images/board-move-1.png" width="256" height="256" alt="white noise example"></p>
+<p><img src="https://github.com/ology/Games/raw/master/Chess-Rep-Coverage/images/board-move-1.png" alt="Move 1"></p>
 
-<p><img src="https://github.com/ology/Games/raw/master/Chess-Rep-Coverage/images/board-move-2.png" width="256" height="256" alt="white noise example"></p>
+<p><img src="https://github.com/ology/Games/raw/master/Chess-Rep-Coverage/images/board-move-2.png" alt="Move 2"></p>
 
-<p><img src="https://github.com/ology/Games/raw/master/Chess-Rep-Coverage/images/board-move-3.png" width="256" height="256" alt="white noise example"></p>
+<p><img src="https://github.com/ology/Games/raw/master/Chess-Rep-Coverage/images/board-move-3.png" alt="Move 3"></p>
+
+<br>How about an animation of the famous "Immortal Game" between Garry Kasparov vs. Veselin Topalov, in 1999?</br>
+<p><img src="https://github.com/ology/Games/raw/master/Chess-Rep-Coverage/images/immortal.gif" alt="The Immortal Game"></p>
 
 =end HTML
 
@@ -301,7 +311,7 @@ __END__
 
 =head1 SEE ALSO
 
-* The code in the C<t/> directory.
+* The code in the F<examples/> and F<t/> directories.
 
 * L<Chess::Rep::Coverage>
 

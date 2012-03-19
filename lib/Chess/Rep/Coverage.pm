@@ -12,7 +12,7 @@ use warnings;
 
 use base 'Chess::Rep';
 
-our $VERSION = '0.0901';
+our $VERSION = '0.10';
 
 =head1 SYNOPSIS
 
@@ -334,7 +334,6 @@ sub board {
 }
 
 sub _ascii_board {
-    # perl -Ilib -MChess::Rep::Coverage -e'$g=Chess::Rep::Coverage->new;print $g->board'
     my $section = shift;
 
     my ($cells, $size, $empty) = (8, 5, 3);
@@ -360,7 +359,7 @@ __END__
 
 =head1 SEE ALSO
 
-* The code in the C<t/> directory.
+* The code in this distribution F<examples/> and F<t/> directories.
 
 * L<Chess::Rep>
 
