@@ -63,5 +63,5 @@ for my $move (@moves) {
 }
 
 __END__
-Make an animate GIF from the moves with ImageMagick:
+Make an animated GIF from the PGN moves with ImageMagick:
 convert -delay 10 -loop 1 Garry_Kasparov-vs-Veselin_Topalov-1999-*.png immortal.gif

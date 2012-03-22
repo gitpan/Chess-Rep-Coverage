@@ -17,7 +17,7 @@ use Imager::Fill;
 use Imager::Font;
 use Imager::Color;
 
-our $VERSION = '0.03';
+our $VERSION = '0.0301';
 
 =head1 SYNOPSIS
 
@@ -43,9 +43,12 @@ or protection status."
 
 Return a new C<Chess::Coverage::Imager> object.
 
-=head2 write()
+=head2 write($name, $type_extension)
 
-  $g->write('my-board', 'png');
+  $filename = $g->write('my-board', 'png');
+
+Return filename on success (as defined by siple existance) or undef on
+failure.
 
 =cut
 
@@ -60,13 +63,46 @@ sub write {
 
 =head2 board()
 
-  $board = $g->board();
+  $board = $g->board(%arguments);
 
-Return an C<Imager> board layout with threats, protections and move
-statuses indicated by concentric colored circles and squares.
+Return an C<Imager> board layout with threats and protections
+indicated by concentric colored circles.  Move status is indicated by
+concentric colored squares.
 
-For example, the FEN sequence at the link under L<SEE ALSO>
-graphically renders as:
+These are the C<%arguments> with their default values, that you can
+override in the call:
+
+  border        => 2
+  channels      => 4
+  font_file     => undef # Set as /path/to/a/fontfile.ttf
+  font_size     => 15
+  grid          => 1 # Boolean
+  letters       => 1 # Boolean
+  max_coord     => 7 # Board side - 1
+  margin        => 20
+  square_height => 33
+  square_width  => 33
+
+  board_color         => #FFFFFF # white
+  border_color        => #808080 # gray
+  grid_color          => #C0C0C0 # silver
+  letter_color        => #000000 # black
+  white_move_color    => #00FF00 # lime
+  black_move_color    => #FDD017 # gold
+  white_threat_color  => #00FF00 # lime
+  black_threat_color  => #FDD017 # gold
+  white_protect_color => #00FF00 # lime
+  black_protect_color => #FDD017 # gold
+
+For instance, if you just want to see the white player protection as
+lime green and threats from the black player as red, call C<board()>
+with C<white_move_color>, C<black_move_color>, C<white_threat_color>,
+and C<black_protect_color> all as C<#FFFFFF>, the
+C<black_threat_color => '#FF0000'> and
+C<white_protect_color => 00FF00>.
+
+The FEN sequence in the C<Wikipedia> link under L<SEE ALSO>
+graphically renders (with default colors) as:
 
 =begin HTML
 
@@ -318,5 +354,7 @@ __END__
 * L<Imager>
 
 * L<http://en.wikipedia.org/wiki/Forsyth-Edwards_Notation>
+
+* L<http://www.chessgames.com/perl/chessgame?gid=1011478> (The "Immortal" game)
 
 =cut
