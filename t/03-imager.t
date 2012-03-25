@@ -15,5 +15,5 @@ $g->set_from_fen($fen);
 my $c = $g->coverage();
 my $b = $g->board();
 isa_ok $b, 'Imager';
-my $f = $g->write('board', 'png');
-ok $f && -s $f > 0, 'wrote board image';
+#my $f = $g->write('board', 'png');
+#ok $f && -s $f > 0, 'wrote board image';

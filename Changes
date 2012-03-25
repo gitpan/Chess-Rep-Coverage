@@ -1,5 +1,8 @@
 Revision history for Chess-Rep-Coverage
 
+0.1002 2012.03.25
+    - Removed Imager write test.
+
 0.1001 2012.03.21
     - Removed the -T from tests.
     - Vastly improved POD in the C-R-C-Imager package.
