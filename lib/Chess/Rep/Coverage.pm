@@ -12,7 +12,7 @@ use warnings;
 
 use base 'Chess::Rep';
 
-our $VERSION = '0.1002';
+our $VERSION = '0.1003';
 
 =head1 SYNOPSIS
 
@@ -353,7 +353,141 @@ sub _ascii_board {
     return $board{$section};
 }
 
+=head2 move_probability()
 
+  @piece_moves = move_probability(%arguments);
+
+Compute the "likelihood" of moving to a protected or threatened position.
+
+=cut
+
+sub move_probability {
+    my ($moves, $threat, $threatened, $protect, $protected) = @ARGV;
+
+    # Bail-out unless the number of moves (greater than or equal to 0).
+    die _usage() unless $moves and $moves >= 0;
+
+    # Set threat penalty and protection rewards.
+    $threat = _set_level('threat', $threat, $moves);
+    $protect = _set_level('protect', $protect, $moves);
+
+    # Create a piece that is unprotected, unthreatened and unbounded.
+    my $piece = [ map { 1 / $_ } ($moves) x $moves ];
+
+    # Apply threatened and protected states to move probabilities.
+    $piece = _influence($threatened, $threat, $piece, 'threat');
+    _output_state($piece);
+    $piece = _influence($protected, $protect, $piece);
+    _output_state($piece);
+}
+
+sub _influence {
+    my($influenced, $score, $piece, $state) = @_;
+
+    # "Move along. Nothing to compute here."
+    return $piece unless $influenced;
+
+    # Convenience variable for "size of piece" == "number of moves."
+    my $size = @$piece - 1;
+
+    # Traverse the influenced moves and compute the probabilities.
+    for my $move (split ',', $influenced) {
+        # Move counter.
+        my $n = 0;
+
+        # Re-evaluate each move given the threat value.
+        for my $p (@$piece) {
+            if ($n + 1 == $move) {
+                # We've found an influenced move!
+                $p = $state
+                    ? $p - $score  # For threats, add the score to the move.
+                    : $p + $score; # For protection, subract from the move.
+            }
+            else {
+                # All moves not influenced.
+                if ($size != 0) {
+                    $p = $state
+                        ? $p + $score / $size  # For threats, subtract a fraction of the score.
+                        : $p - $score / $size; # For protection, add a fraction of the score.
+                }
+            }
+
+            # Increment the move number of the piece.
+            $n++;
+        }
+    }
+
+    # Make sure all elements sum to 1.
+    _cross_check($piece);
+
+    return $piece;
+}
+
+sub _output_state {
+    my $piece = shift;
+    my $i = 0;
+    print 'P: ', join(' ', map { sprintf '%d:%.4f', ++$i, $_ } @$piece), "\n";
+}
+
+sub _set_level {
+    my ($level, $value, $moves) = @_;
+
+    # Unless given, default value is zero.
+    $value = defined $value ? $value : 0;
+    # Bail out unless the value is either zero or greater than moves.
+    die ucfirst($level) . "level must be zero or more.\n" if $value < 0;
+
+    # Set a non-zero value in relation to the number of moves.
+    $value = $moves + $value - 1 if $value > 0;
+
+    # Make value something that can be used in probability equations.
+    $value = 1 / $value if $value != 0;
+
+    return $value;
+}
+
+sub _cross_check {
+    my $vector = shift;
+    my $sum = 0;
+    # Make sure all elements sum to unity.
+    $sum += $_ for @$vector;
+    # TODO Make == work, instead of eq.
+    warn "Sum: $sum\n" if $sum ne '1';
+}
+
+sub _usage {
+    return <<USAGE;
+
+Compute probabilites of chess moves in a protective, threatening environment.
+Copyright 2012 Gene Boggs <gene\@cpan.org>
+
+Usage: perl $0 [0-9...] [0-9...] [t1,t2...] [0-9...] [p1,p2...]
+
+Ordered arguments:
+ 'moves' is the number of moves of a piece.
+    For example, a unobstructed knight can make eight moves.
+ 'threat' is the value or score of a single threat.
+ 'threatened moves' is a CSV list of threatened move numbers.
+    This means that you can be captured by your enemy if you move there.
+ 'protect' is the value or score of a single protection.
+ 'protected moves' is a CSV list of protected move numbers.
+    This means that you will be protected by an ally if you move there.
+
+Examples:
+ perl move-probability 8              # An unobstructed, unprotected knight
+ perl move-probability 8 1            # Same
+ perl move-probability 8 1 0          # Ditto
+ perl move-probability 8 1 0 1        # "
+ perl move-probability 8 1 0 1 0      # Right. Gotchya. 10-4 Good buddy.
+ perl move-probability 8 1 1,8        # Threaten the 1st & 8th moves.
+ perl move-probability 8 0 0 1 1,2    # Protect the 1st & 2nd moves.
+ perl move-probability 8 1 1,8 1 1,2  # Protect & threaten
+ perl move-probability 8 10 1,8       # Threaten with a penalty of 10.
+
+* This logic does not treat "not making a move" as a value, at the moment...
+USAGE
+}
+    
 1;
 __END__
 

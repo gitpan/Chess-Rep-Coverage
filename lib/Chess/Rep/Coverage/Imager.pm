@@ -47,7 +47,7 @@ Return a new C<Chess::Coverage::Imager> object.
 
   $filename = $g->write('my-board', 'png');
 
-Return filename on success (as defined by siple existance) or undef on
+Return filename on success (as defined by simple existence) or undef on
 failure.
 
 =cut

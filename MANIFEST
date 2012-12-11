@@ -7,8 +7,10 @@ README
 dist.ini
 examples/from-pgn
 examples/immortal.pgn
+examples/move-probability
 lib/Chess/Rep/Coverage.pm
 lib/Chess/Rep/Coverage/Imager.pm
 t/00-load.t
 t/01-methods.t
 t/03-imager.t
+t/author-pod-spell.t
