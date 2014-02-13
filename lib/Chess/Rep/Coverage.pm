@@ -1,61 +1,19 @@
 package Chess::Rep::Coverage;
+BEGIN {
+  $Chess::Rep::Coverage::AUTHORITY = 'cpan:GENE';
+}
 # ABSTRACT: Expose chess ply potential energy
 
-=head1 NAME
-
-Chess::Rep::Coverage - Expose chess ply potential energy
-
-=cut
 
 use strict;
 use warnings;
 
-use base 'Chess::Rep';
+use parent 'Chess::Rep';
 
-our $VERSION = '0.1003';
+use constant SIZE => 7;
 
-=head1 SYNOPSIS
+our $VERSION = '0.11';
 
-  use Chess::Rep::Coverage;
-
-  my $g = Chess::Rep::Coverage->new();
-  print $g->board();
-
-  $g->set_from_fen('8/8/8/3pr3/4P3/8/8/8 w ---- - 0 1');
-  $c = $g->coverage(); # Recalculate board status
-  print $g->board();
-
-=head1 DESCRIPTION
-
-This module exposes the "potential energy" of a chess ply by returning
-a hash reference of the board positions, pieces and their "attack or
-protection status."
-
-=head1 METHODS
-
-=head2 new()
-
-Return a new C<Chess::Coverage> object.
-
-=head2 coverage()
-
-  $c = $gcoverage();
-
-Set the C<cover> attribute and return a data structure, keyed on board
-position, showing
-
-  occupant            => Human readable piece name
-  color               => Color number of the occupant
-  index               => The C<Chess::Rep/Position> board position index
-  move                => List of positions that are legal moves by this piece
-  protects            => List of positions that are protected by this piece
-  threatens           => List of positions that are threatened by this piece
-  is_protected_by     => List of positions that protect this piece
-  is_threatened_by    => List of positions that threaten this piece
-  white_can_move_here => List of white piece positions that can move to this position
-  black_can_move_here => List of black piece positions that can move to this position
-
-=cut
 
 sub coverage {
     my $self = shift;
@@ -71,8 +29,8 @@ sub coverage {
     @pieces{values %{+Chess::Rep::PIECE_TO_ID()}} = keys %{+Chess::Rep::PIECE_TO_ID()};
 
     # Look at each board position.
-    for my $row (0 .. 7) {
-        for my $col (0 .. 7) {
+    for my $row (0 .. SIZE) {
+        for my $col (0 .. SIZE) {
             my $p = $self->get_piece_at($row, $col); # decimal of index
             if ($p) {
                 my $c = Chess::Rep::piece_color($p); # 0=black, 0x80=white
@@ -88,7 +46,7 @@ sub coverage {
                 $cover->{$f}{threatens} = [];
 
                 # Kings are special-cased.
-                if ($p == 4 or $p == 132) {
+                if ($p & 0x04) {
                     # Collect the moves of the piece.
                     $cover->{$f}{move} = $self->_fetch_new_moves($f, $i, $c);
 
@@ -99,6 +57,21 @@ sub coverage {
                         my $x = Chess::Rep::get_index(@$m);
                         next if $x & 0x88;
                         $self->_set_piece_status($cover, $f, $x, $c);
+                    }
+                }
+                # Attacking pawns are special-cased.
+                elsif (($p & 0x01) && $self->to_move != $c) {
+                    my $moves = $c == 0
+                        ? [ [$row - 1, $col + 1], [$row - 1, $col - 1] ]
+                        : [ [$row + 1, $col + 1], [$row + 1, $col - 1] ];
+                    # Add diagonal positions unless occupied.
+                    for my $m (@$moves) {
+                        next if $m->[0] < 0 || $m->[0] > SIZE
+                             || $m->[1] < 0 || $m->[1] > SIZE;
+                        my $x = Chess::Rep::get_index(@$m);
+                        $self->_set_piece_status($cover, $f, $x, $c);
+                        # Collect the moves of the piece.
+                        push @{ $cover->{$f}{move} }, $x;
                     }
                 }
                 else {
@@ -170,7 +143,7 @@ sub _invert_fen {
     # Split the FEN into rows.
     my @fen = split /\//, $fen; # rows: 7..0, cols: 0..7
     # The FEN sections are the rows reversed.
-    $row = 7 - $row;
+    $row = SIZE - $row;
 
     my $position = 0;
     my $counter = 0;
@@ -206,6 +179,7 @@ sub _fetch_new_moves {
     $self->to_move($color);
     # Recompute the move status.
     $self->compute_valid_moves;
+    # TODO Pawns can move diagonally to capture. That is a valid move in the abstract.
     # Collect the moves of the piece.
     return [ map { $_->{to} } grep { $_->{from} == $index } @{ $self->status->{moves} } ];
 }
@@ -234,45 +208,6 @@ sub _cover {
     return $self->{cover};
 }
 
-=head2 board()
-
-  print $self->board();
-
-Return an ASCII board layout with threats, protections and move
-statuses.
-
-Protection and threat is indicated by C<p/t>.  White and black
-movement is indicated by C<w:b>.
-
-For example, the FEN C<8/8/8/3pr3/4P3/8/8/8 w ---- - 0 1> is rendered
-as:
-
-       A     B     C     D     E     F     G     H
-    +-----+-----+-----+-----+-----+-----+-----+-----+
-  1 |     |     |     |     |     |     |     |     |
-    +-----+-----+-----+-----+-----+-----+-----+-----+
-  2 |     |     |     |     |     |     |     |     |
-    +-----+-----+-----+-----+-----+-----+-----+-----+
-  3 |     |     |     |     |     |     |     |     |
-    +-----+-----+-----+-----+-----+-----+-----+-----+
-  4 |     |     |     | 0:1 | 0/2 |     |     |     |
-    +-----+-----+-----+-----+-----+-----+-----+-----+
-  5 |     |     |     | 1/1 | 0/0 | 0:1 | 0:1 | 0:1 |
-    +-----+-----+-----+-----+-----+-----+-----+-----+
-  6 |     |     |     |     | 0:1 |     |     |     |
-    +-----+-----+-----+-----+-----+-----+-----+-----+
-  7 |     |     |     |     | 0:1 |     |     |     |
-    +-----+-----+-----+-----+-----+-----+-----+-----+
-  8 |     |     |     |     | 0:1 |     |     |     |
-    +-----+-----+-----+-----+-----+-----+-----+-----+
-
-This means that, 1) the black pawn at D5 can move to D4 and can
-capture the white pawn at E4; 2) the white pawn at E4 can capture the
-pawn at D5 but cannot move; 3) the black rook at E5 protects the black
-pawn at D5, can capture the white pawn at E4 and can move to F5
-through H5 or E6 through E8.
-
-=cut
 
 sub board {
     my $self = shift;
@@ -353,13 +288,6 @@ sub _ascii_board {
     return $board{$section};
 }
 
-=head2 move_probability()
-
-  @piece_moves = move_probability(%arguments);
-
-Compute the "likelihood" of moving to a protected or threatened position.
-
-=cut
 
 sub move_probability {
     my ($moves, $threat, $threatened, $protect, $protected) = @ARGV;
@@ -489,7 +417,114 @@ USAGE
 }
     
 1;
+
 __END__
+
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+Chess::Rep::Coverage - Expose chess ply potential energy
+
+=head1 VERSION
+
+version 0.11
+
+=head1 SYNOPSIS
+
+  use Chess::Rep::Coverage;
+
+  my $g = Chess::Rep::Coverage->new();
+  print $g->board();
+
+  $g->set_from_fen('8/8/8/3pr3/4P3/8/8/8 w ---- - 0 1');
+  $c = $g->coverage(); # Recalculate board status
+  print $g->board();
+  $piece = $g->piece_at($row, $col);
+  $boolean = $g->protected($row, $col);
+  $boolean = $g->threatened($row, $col);
+  $boolean = $g->white_can_move($row, $col);
+  $boolean = $g->black_can_move($row, $col);
+
+=head1 DESCRIPTION
+
+This module exposes the "potential energy" of a chess ply by returning
+a hash reference of the board positions, pieces and their "attack or
+protection status."
+
+=head1 NAME
+
+Chess::Rep::Coverage - Expose chess ply potential energy
+
+=head1 METHODS
+
+=head2 new()
+
+Return a new C<Chess::Coverage> object.
+
+=head2 coverage()
+
+  $c = $gcoverage();
+
+Set the C<cover> attribute and return a data structure, keyed on board
+position, showing
+
+  occupant            => Human readable piece name
+  color               => Color number of the occupant
+  index               => The C<Chess::Rep/Position> board position index
+  move                => List of positions that are legal moves by this piece
+  protects            => List of positions that are protected by this piece
+  threatens           => List of positions that are threatened by this piece
+  is_protected_by     => List of positions that protect this piece
+  is_threatened_by    => List of positions that threaten this piece
+  white_can_move_here => List of white piece positions that can move to this position
+  black_can_move_here => List of black piece positions that can move to this position
+
+=head2 board()
+
+  print $self->board();
+
+Return an ASCII board layout with threats, protections and move
+statuses.
+
+Protection and threat is indicated by C<p/t>.  White and black
+movement is indicated by C<w:b>.
+
+For example, the FEN C<8/8/8/3pr3/4P3/8/8/8 w ---- - 0 1> is rendered
+as:
+
+       A     B     C     D     E     F     G     H
+    +-----+-----+-----+-----+-----+-----+-----+-----+
+  1 |     |     |     |     |     |     |     |     |
+    +-----+-----+-----+-----+-----+-----+-----+-----+
+  2 |     |     |     |     |     |     |     |     |
+    +-----+-----+-----+-----+-----+-----+-----+-----+
+  3 |     |     |     |     |     |     |     |     |
+    +-----+-----+-----+-----+-----+-----+-----+-----+
+  4 |     |     |     | 0:1 | 0/2 |     |     |     |
+    +-----+-----+-----+-----+-----+-----+-----+-----+
+  5 |     |     |     | 1/1 | 0/0 | 0:1 | 0:1 | 0:1 |
+    +-----+-----+-----+-----+-----+-----+-----+-----+
+  6 |     |     |     |     | 0:1 |     |     |     |
+    +-----+-----+-----+-----+-----+-----+-----+-----+
+  7 |     |     |     |     | 0:1 |     |     |     |
+    +-----+-----+-----+-----+-----+-----+-----+-----+
+  8 |     |     |     |     | 0:1 |     |     |     |
+    +-----+-----+-----+-----+-----+-----+-----+-----+
+
+This means that, 1) the black pawn at D5 can move to D4 and can
+capture the white pawn at E4; 2) the white pawn at E4 can capture the
+pawn at D5 but cannot move; 3) the black rook at E5 protects the black
+pawn at D5, can capture the white pawn at E4 and can move to F5
+through H5 or E6 through E8.
+
+=head2 move_probability()
+
+  @piece_moves = move_probability(%arguments);
+
+Compute the "likelihood" of moving to a protected or threatened position.
 
 =head1 SEE ALSO
 
@@ -498,5 +533,16 @@ __END__
 * L<Chess::Rep>
 
 * L<http://en.wikipedia.org/wiki/Forsyth-Edwards_Notation>
+
+=head1 AUTHOR
+
+Gene Boggs <gene@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2014 by Gene Boggs.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut

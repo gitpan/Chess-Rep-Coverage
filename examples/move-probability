@@ -9,17 +9,24 @@ my ($moves, $threat, $threatened, $protect, $protected) = @ARGV;
 die usage() unless $moves and $moves >= 0;
 
 # Set threat penalty and protection rewards.
-$threat = set_level('threat', $threat, $moves);
+$threat  = set_level('threat', $threat, $moves);
 $protect = set_level('protect', $protect, $moves);
 
 # Create a piece that is unprotected, unthreatened and unbounded.
 my $piece = [ map { 1 / $_ } ($moves) x $moves ];
 
-# Apply threatened and protected states to move probabilities.
-$piece = influence($threatened, $threat, $piece, 'threat');
-output_state($piece);
-$piece = influence($protected, $protect, $piece);
-output_state($piece);
+# Show threatened states to move probabilities.
+my $state = 'threatened';
+my $t = influence($threatened, $threat, $piece, $state);
+output_state($piece, $state);
+# Show protected states to move probabilities.
+$state = ' protected';
+my $p = influence($protected, $protect, $piece);
+output_state($piece, $state);
+# Apply both threatened and protected states.
+$state = '  combined';
+$t = influence($threatened, $threat, $t);
+output_state($piece, $state);
 
 sub influence {
     my($influenced, $score, $piece, $state) = @_;
@@ -64,8 +71,9 @@ sub influence {
 }
 
 sub output_state {
+    my ($piece, $state) = @_;
     my $i = 0;
-    print 'P: ', join(' ', map { sprintf '%d:%.4f', ++$i, $_ } @$piece), "\n";
+    print "$state: ", join(' ', map { sprintf '%d:%.4f', ++$i, $_ } @$piece), "\n";
 }
 
 sub set_level {
@@ -74,7 +82,7 @@ sub set_level {
     # Unless given, default value is zero.
     $value = defined $value ? $value : 0;
     # Bail out unless the value is either zero or greater than moves.
-    die ucfirst($level) . "level must be zero or more.\n" if $value < 0;
+    die ucfirst($level) ." level must be zero or more.\n" if $value < 0;
 
     # Set a non-zero value in relation to the number of moves.
     $value = $moves + $value - 1 if $value > 0;
