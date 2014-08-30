@@ -4,7 +4,6 @@ BEGIN {
 }
 # ABSTRACT: Expose chess ply potential energy
 
-
 use strict;
 use warnings;
 
@@ -12,7 +11,7 @@ use parent 'Chess::Rep';
 
 use constant SIZE => 7;
 
-our $VERSION = '0.11';
+our $VERSION = '0.1101';
 
 
 sub coverage {
@@ -430,7 +429,7 @@ Chess::Rep::Coverage - Expose chess ply potential energy
 
 =head1 VERSION
 
-version 0.11
+version 0.1101
 
 =head1 SYNOPSIS
 
@@ -453,10 +452,6 @@ version 0.11
 This module exposes the "potential energy" of a chess ply by returning
 a hash reference of the board positions, pieces and their "attack or
 protection status."
-
-=head1 NAME
-
-Chess::Rep::Coverage - Expose chess ply potential energy
 
 =head1 METHODS
 

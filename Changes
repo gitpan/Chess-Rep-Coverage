@@ -1,5 +1,8 @@
 Revision history for Chess-Rep-Coverage
 
+0.1101 2014-08-30
+    - Fixed POD
+
 0.11  2014-02-13
     - Removed dependence upon Imager.
     - Special-cased attacking pawns to show diagonal movement
